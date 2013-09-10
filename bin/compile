@@ -89,6 +89,12 @@ if [ -f requirements.txt ]; then
   fi
 fi
 
+if [ -f requirements.txt ];
+then
+	echo "-----> Installing dependencies using pip version $(bin/pip --version | awk '{print $2}')"
+	PIP_DOWNLOAD_CACHE=$PIP_DOWNLOAD_CACHE bin/pip install --use-mirrors -r requirements.txt | indent
+fi
+
 source bin/activate 
 pip install sphinx --use-mirrors
 pip install oauth2==1.5.211 Flask==0.8 Flask-OpenID==1.0.1 python-openid==2.2.5 --use-mirrors
@@ -104,12 +110,6 @@ mkdir $ROOT_DIR/src/app/templates
 mv $ROOT_DIR/src/app $CACHE_DIR/.heroku/
 mv $PROJECT/_build/html/* $CACHE_DIR/.heroku/app/templates/
 cp -R $CACHE_DIR/.heroku .
-
-if [ -f requirements.txt ]; 
-then
-  echo "-----> Installing dependencies using pip version $(bin/pip --version | awk '{print $2}')"
-  PIP_DOWNLOAD_CACHE=$PIP_DOWNLOAD_CACHE bin/pip install --use-mirrors -r requirements.txt | indent
-fi
 
 set +e
 OUT=$(virtualenv --relocatable .)
