@@ -100,6 +100,7 @@ pip install sphinx $PIP_OPTS
 pip install oauth2==1.5.211 Flask==0.8 Flask-OpenID==1.0.1 python-openid==2.2.5 $PIP_OPTS
 CONF_FILE=$(find . -name 'conf.py' | head -1)
 PROJECT=$(dirname $CONF_FILE)
+tree
 pushd $PROJECT
 make html
 popd
