@@ -13,21 +13,11 @@ CACHE_DIR=$2
 
 NAME=$($BIN_DIR/detect $BUILD_DIR)
 PIP_DOWNLOAD_CACHE=${PIP_DOWNLOAD_CACHE:-$CACHE_DIR/pip_downloads}
-VIRTUALENV_DIRS="bin include lib .heroku"
 VENDORED_MEMCACHED="http://cl.ly/0a191R3K160t1w1P0N25/vendor-libmemcached.tar.gz"
 
 indent() {
   RE="s/^/       /"
   [ $(uname) == "Darwin" ] && sed -l "$RE" || sed -u "$RE"
-}
-
-virtualenv() {
-  python - "$@" <<EOF
-import sys
-sys.path.insert(0, "$ROOT_DIR/src/virtualenv-1.6.4")
-import virtualenv
-virtualenv.main()
-EOF
 }
 
 cd $BUILD_DIR
@@ -37,26 +27,9 @@ if [ "$NAME" = "Python" ]; then
   [ -f manage.py ] && [ -f settings.py ] && { echo " !     Django app must be in a package subdirectory"; exit 1; }
 fi
 
-# warn a checked-in virtualenv
-if [ -d "lib" ] || [ -d "bin" ]; then
-  echo " !     You have a virtualenv checked in. You should ignore the appropriate paths in your repo. See http://devcenter.heroku.com/articles/gitignore for more info.";
-fi
-
-# reject a conflicting checked-in virtualenv
-if [ -f "lib/python2.7" ]; then
-  echo " !     Checked-in virtualenv conflict."
-  exit 1;
-fi
-
 
 # copy artifacts out of cache if exists
 mkdir -p $CACHE_DIR
-for dir in $VIRTUALENV_DIRS; do
-  cp -R $CACHE_DIR/$dir . &> /dev/null || true
-done
-
-echo "-----> Preparing virtualenv version $(virtualenv --version)"
-virtualenv --no-site-packages . | indent
 
 # create set-aside .heroku folder.
 rm -rf .heroku
@@ -85,17 +58,16 @@ fi
 
 if [ -f requirements.txt ]; then
   if (grep -Fiq "hg+" requirements.txt) then
-    PIP_DOWNLOAD_CACHE=$PIP_DOWNLOAD_CACHE bin/pip install $PIP_OPTS mercurial | indent
+    PIP_DOWNLOAD_CACHE=$PIP_DOWNLOAD_CACHE pip install $PIP_OPTS mercurial | indent
   fi
 fi
 
 if [ -f requirements.txt ];
 then
 	echo "-----> Installing dependencies using pip version $(bin/pip --version | awk '{print $2}')"
-	PIP_DOWNLOAD_CACHE=$PIP_DOWNLOAD_CACHE bin/pip install $PIP_OPTS -r requirements.txt | indent
+	PIP_DOWNLOAD_CACHE=$PIP_DOWNLOAD_CACHE pip install $PIP_OPTS -r requirements.txt | indent
 fi
 
-source bin/activate 
 pip install sphinx $PIP_OPTS
 pip install oauth2==1.5.211 Flask==0.8 Flask-OpenID==1.0.1 python-openid==2.2.5 $PIP_OPTS
 CONF_FILE=$(find . -name 'conf.py' | head -1)
@@ -111,21 +83,8 @@ mv $ROOT_DIR/src/app $CACHE_DIR/.heroku/
 mv $PROJECT/_build/html/* $CACHE_DIR/.heroku/app/templates/
 cp -R $CACHE_DIR/.heroku .
 
-set +e
-OUT=$(virtualenv --relocatable .)
-[ $? -ne 0 ] && {
-  echo " !     Error making virtualenv relocatable"
-  echo "$OUT" | indent
-  exit 1
-}
-set -e
-
 # repack cache
 mkdir -p $CACHE_DIR
-for DIR in $VIRTUALENV_DIRS ; do
-  rm -rf $CACHE_DIR/$DIR
-  cp -R $DIR $CACHE_DIR/$DIR
-done
 rm -rf $CACHE_DIR/.heroku
 cp -R .heroku $CACHE_DIR/.heroku
 
