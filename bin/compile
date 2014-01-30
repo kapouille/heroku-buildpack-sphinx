@@ -68,8 +68,13 @@ then
 	PIP_DOWNLOAD_CACHE=$PIP_DOWNLOAD_CACHE pip install $PIP_OPTS -r requirements.txt | indent
 fi
 
-pip install sphinx $PIP_OPTS
-pip install oauth2==1.5.211 Flask==0.8 Flask-OpenID==1.0.1 python-openid==2.2.5 $PIP_OPTS
+PYTHON_VERSION=${PYTHON_VERSION:-2.7}
+export PYTHONUSERBASE=/app/.python
+export PYTHONUNBUFFERED=True
+APYBIN=/opt/ActivePython-$PYTHON_VERSION/bin
+
+$APYBIN/pip install sphinx $PIP_OPTS
+$APYBIN/pip install oauth2==1.5.211 Flask==0.8 Flask-OpenID==1.0.1 python-openid==2.2.5 $PIP_OPTS
 CONF_FILE=$(find . -name 'conf.py' | head -1)
 PROJECT=$(dirname $CONF_FILE)
 pushd $PROJECT
